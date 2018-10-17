@@ -18,31 +18,56 @@ public class Client extends Thread{
     private String host;
     
     private int port;
+
+    private LEDLightsMain main;
     
-    public Client(String host, int port) {
+    public Client(LEDLightsMain main, String host, int port) {
     	this.host = host;
     	this.port = port;
+    	this.main = main;
     }
-    
-    public void run() {
+
+    private long heartbeatDelayMillis = 5000;
+
+    private void connect(){
+        main.getTextArea().append("Connecting to host " + host + " on port " + port + ".\n");
         try {
-
-            System.out.println("Connecting to host " + host + " on port " + port + ".");
-
-            try {
-                echoSocket = new Socket(host, port);
-                out = new PrintWriter(echoSocket.getOutputStream(), true);
-                in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-            } catch (UnknownHostException e) {
-                System.err.println("Unknown host: " + host);
-                System.exit(1);
-            } catch (IOException e) {
-                System.err.println("Unable to get streams from server");
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
+            echoSocket = new Socket(host, port);
+            out = new PrintWriter(echoSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
+        } catch (UnknownHostException e) {
+            main.getTextArea().append("Unknown host: " + host + "\n");
+            System.exit(1);
+        } catch (IOException e) {
+            main.getTextArea().append("Could not connect to server. Reconnecting...\n");
+            connect();
         }
+        createHeartBeat();
+    }
+
+    public void createHeartBeat(){
+        new Thread() {
+            public void run() {
+                //send a test signal
+                try {
+                    if(echoSocket != null) {
+                        echoSocket.getOutputStream().write(666);
+                    }
+                    sleep(heartbeatDelayMillis);
+                    createHeartBeat();
+                } catch (InterruptedException e) {
+                    main.getTextArea().append("Could not connect to server. Reconnecting...\n");
+                    connect();
+                } catch (IOException e) {
+                    main.getTextArea().append("Could not connect to server. Reconnecting...\n");
+                    connect();
+                }
+            }
+        }.start();
+    }
+
+    public void run() {
+        connect();
     }
     
     public void close(){

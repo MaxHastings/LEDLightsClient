@@ -31,7 +31,7 @@ public class LEDLightsMain extends JFrame implements PitchDetectionHandler {
     private String host = "192.168.1.217";
     private int port = 65432;
     
-    private Client client = new Client(host, port);
+    private Client client = new Client(this, host, port);
     
 	private GraphPanel graphPanel;
 	
@@ -44,6 +44,10 @@ public class LEDLightsMain extends JFrame implements PitchDetectionHandler {
 	private LowPassFS lowPassFS = new LowPassFS(60, sampleRate);
     
 	private final JTextArea textArea;
+
+	public JTextArea getTextArea() {
+		return textArea;
+	}
 
 	private AudioDispatcher dispatcher;
 	private Mixer currentMixer;
@@ -72,7 +76,6 @@ public class LEDLightsMain extends JFrame implements PitchDetectionHandler {
 		this.setLayout(new GridLayout(3, 2));
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setTitle("LED Light Controller");
-		connectToServer();
 		
 		JPanel inputPanel = new InputPanel();
 		add(inputPanel);
@@ -118,6 +121,8 @@ public class LEDLightsMain extends JFrame implements PitchDetectionHandler {
 		textArea = new JTextArea();
 		textArea.setEditable(false);
 		add(new JScrollPane(textArea));
+
+		connectToServer();
 	}
 
 
